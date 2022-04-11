@@ -1,0 +1,1 @@
+export const RootPath = 'http://localhost/ws/index.php/';
