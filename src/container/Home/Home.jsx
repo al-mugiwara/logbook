@@ -110,7 +110,7 @@ const Home = () => {
 
                             <Link to="/log-book"  style={{ textDecoration: 'none' }}>
                                 <Button key="ddd" sx={{ my: 2, color: 'white', display: 'block' }}>
-                                    Data Log Book
+                                    Data User
                                 </Button>
                             </Link>
                             <Link to="/"  style={{ textDecoration: 'none' }}>

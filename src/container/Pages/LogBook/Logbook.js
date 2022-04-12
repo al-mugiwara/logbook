@@ -1,5 +1,7 @@
 //base
 import React, { Fragment, useState, useEffect } from "react";
+//self
+import GENI from "../../../services";
 
 //material ui
 import CssBaseline from '@mui/material/CssBaseline';
@@ -21,8 +23,11 @@ import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import GENI from "../../../services";
-import axios from 'axios';
+import TablePagination from '@mui/material/TablePagination';
+import LinearProgress from '@mui/material/LinearProgress';
+import SearchBar from "material-ui-search-bar";
+import SendIcon from '@mui/icons-material/Send';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -53,19 +58,48 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 }));
 
 const Logbook = () => {
+    //deklarasi const
     const [post, setPost] = useState([]);
     const [data, setData] = useState(false);
-    // const [kd_user,setKd_user]       = useState('');
-    // const [nama,setNama]             = useState('');
-    // const [username,setUsername]     = useState('');
-    // const [password,setPassword]     = useState('');
-
+    const [tipe, setTipe] = useState(false);
+    const [kd_user, setKd_user] = useState('');
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [search, setSearch] = useState("");
     const [formData, setFormData] = useState({
         kd_user: "",
         nama: "",
         username: "",
         password: ""
     })
+
+    //cari data
+    const requestSearch = (searchVal) => {
+        const filteredRows = post.filter((row) => {
+            return row.nama.toLowerCase().includes(searchVal.toLowerCase())
+        })
+        setPost(filteredRows);
+        if (searchVal === "") {
+            getDataAPI()
+        }
+    }
+
+    const cancelSearch = () => {
+        setSearch("");
+        requestSearch(search)
+        getDataAPI()
+    }
+
+
+    //datatable
+    const handleChangePage = (e, newPage) => {
+        setPage(newPage);
+    }
+
+    const handleChangeRowsPerPage = (e) => {
+        setRowsPerPage(+e.target.value)
+        setPage(0)
+    }
 
     //get data user
     const getDataAPI = () => {
@@ -75,12 +109,28 @@ const Logbook = () => {
         })
     }
 
+    //get edit user
     const editDataAPI = (e) => {
         GENI.editUser(e).then(result => {
-            let isi = JSON.stringify(result);
-            console.log(JSON.parse(isi))
-            // setFormData(JSON.stringify(result))
-           // console.log(isi[nama])
+            let a = result.map((row) => {
+                let b = row;
+                setFormData(row)
+                setKd_user(row.kd_user)
+                setTipe(true)
+            });
+        })
+    }
+
+    //put data user
+    const putDataAPI = (e) => {
+        GENI.updateUser(formData, kd_user).then(result => {
+            getDataAPI()
+            setFormData({
+                kd_user: '',
+                nama: '',
+                username: '',
+                password: ''
+            })
         })
     }
 
@@ -102,7 +152,11 @@ const Logbook = () => {
     // }
 
     const handleSubmit = (e) => {
-        postDataAPI();
+        if (tipe) {
+            putDataAPI()
+        } else {
+            postDataAPI()
+        }
     }
 
     //delete data
@@ -112,9 +166,11 @@ const Logbook = () => {
         })
     }
 
-
     useEffect(() => {
-        getDataAPI();
+        // setTimeout(() => {
+        //     getDataAPI();
+        // }, 2000)
+        getDataAPI()
     }, [data]);
 
     return (
@@ -132,38 +188,46 @@ const Logbook = () => {
                             Form Pengguna
                         </Typography></Divider>
                         <CardContent>
-                            <Grid container justifyContent="center">
-                                <Grid item xs={8}>
-                                    <Typography sx={{ fontSize: 20, fontWeight: 600 }} gutterBottom variant="h4">
+                            <Grid container justifyContent="center" style={{ margin: 10 }} >
+                                <Grid item xs={2}>
+                                    <Typography sx={{ fontSize: 15, fontWeight: 600 }} style={{ paddingBottom: 30, marginLeft: 150, marginTop: 15 }} gutterBottom variant="h4">
                                         Nama Lengkap
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} justifyContent="center" style={{ paddingLeft: '30vh' }}>
-                                    <TextField style={{ width: '80%' }} name="nama" onChange={(e) => setFormData({ ...formData, nama: e.target.value, kd_user: new Date().getTime() })} value={formData.nama} />
+                                <Grid item xs={10} justifyContent="center">
+                                    <TextField style={{ width: '80%' }} name="nama" onChange={(e) => setFormData({ ...formData, nama: e.target.value, kd_user: new Date().getTime() })} value={formData.nama} label="Nama Lengkap" />
                                 </Grid>
                             </Grid>
-                            <Grid container justifyContent="center" paddingTop={3}>
-                                <Grid item xs={8}>
-                                    <Typography sx={{ fontSize: 20, fontWeight: 600 }} gutterBottom variant="h4">
+                            <Grid container justifyContent="center" style={{ margin: 10 }}>
+                                <Grid item xs={2}>
+                                    <Typography sx={{ fontSize: 15, fontWeight: 600 }} style={{ paddingBottom: 30, marginLeft: 150, marginTop: 15 }} gutterBottom variant="h4">
                                         Username
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} justifyContent="center" style={{ paddingLeft: '30vh' }}>
-                                    <TextField style={{ width: '80%' }} name="username" onChange={(e) => setFormData({ ...formData, username: e.target.value })} value={formData.username} />
+                                <Grid item xs={10} justifyContent="center" >
+                                    <TextField style={{ width: '80%' }} name="username" onChange={(e) => setFormData({ ...formData, username: e.target.value })} value={formData.username} label="Username" />
                                 </Grid>
                             </Grid>
-                            <Grid container justifyContent="center" paddingTop={3}>
-                                <Grid item xs={8}>
-                                    <Typography sx={{ fontSize: 20, fontWeight: 600 }} gutterBottom variant="h4">
+                            <Grid container justifyContent="center" style={{ margin: 10 }}>
+                                <Grid item xs={2}>
+                                    <Typography sx={{ fontSize: 15, fontWeight: 600 }} style={{ paddingBottom: 30, marginLeft: 150, marginTop: 15 }} gutterBottom variant="h4">
                                         Password
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} justifyContent="center" style={{ paddingLeft: '30vh' }}>
-                                    <TextField style={{ width: '80%' }} hintText="Password" name="password" type="password" onChange={(e) => setFormData({ ...formData, password: e.target.value })} value={formData.password} />
+                                <Grid item xs={10} justifyContent="center">
+                                    <TextField style={{ width: '80%' }} hintText="Password" name="password" type="password" onChange={(e) => setFormData({ ...formData, password: e.target.value })} value={formData.password} label="Password" />
                                 </Grid>
                             </Grid>
-                            <Grid container justifyContent="center" paddingTop={5} paddingBottom={5}>
-                                <Button variant="contained" onClick={(handleSubmit)}>Simpan</Button>
+                            <Grid container justifyContent="center" >
+                                <Button variant="contained" onClick={(handleSubmit)} endIcon={<SendIcon />}>Simpan</Button>
+                            </Grid>
+                            <Grid container padding={2} >
+                                <SearchBar
+                                    value={search}
+                                    onChange={(searchVal) => requestSearch(searchVal)}
+                                    onCancelSearch={() => cancelSearch()}
+                                >
+                                </SearchBar>
                             </Grid>
                             <TableContainer component={Paper} padding={10}>
                                 <Table aria-label="customized table">
@@ -176,21 +240,37 @@ const Logbook = () => {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {post.map((row, index = 1) => (
-                                            <StyledTableRow key={row.kd_user}>
-                                                <StyledTableCell scope="row" style={{ width: '2px' }}>
-                                                    {index + 1}
-                                                </StyledTableCell>
-                                                <StyledTableCell align="left">{row.nama}</StyledTableCell>
-                                                <StyledTableCell align="left">{row.username}</StyledTableCell>
-                                                <StyledTableCell align="left"><Button variant="contained" style={{ margin: '1rem', background: '#4CAF50' }} onClick={() => editDataAPI(row.kd_user)}>Edit</Button>
-                                                    <Button variant="contained" style={{ background: 'red' }} onClick={() => handleDelete(row.kd_user)}>Delete</Button>
-                                                </StyledTableCell>
-                                            </StyledTableRow>
-                                        ))}
+                                        {
+                                            post.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index = 1) => (
+                                                <StyledTableRow key={row.kd_user}>
+                                                    <StyledTableCell scope="row" style={{ width: '2px',height: "8px"}}>
+                                                        {index + 1}
+                                                    </StyledTableCell>
+                                                    <StyledTableCell align="left" style={{ height: "8px", padding: "0px"}}>{row.nama}</StyledTableCell>
+                                                    <StyledTableCell align="left" style={{ height: "8px", padding: "0px"}}>{row.username}</StyledTableCell>
+                                                    <StyledTableCell align="left" style={{ height: "8px", padding: "0px"}}><Button variant="contained" style={{ margin: '1rem', background: '#4CAF50' }} onClick={() => editDataAPI(row.kd_user)}>Edit</Button>
+                                                        <Button variant="contained" style={{ background: 'red' }} onClick={() => handleDelete(row.kd_user)} startIcon={<DeleteIcon />}>Delete</Button>
+                                                    </StyledTableCell>
+                                                </StyledTableRow>
+                                            ))
+                                        }
                                     </TableBody>
                                 </Table>
                             </TableContainer>
+                            {
+                                post && post.length > 0 ? " "
+                                    : <LinearProgress component={Paper} color="primary" style={{ width: '100%' }} />
+                            }
+                            <TablePagination
+                                rowsPerPageOptions={[5, 10, 25, 100]}
+                                component="div"
+                                count={post.length}
+                                rowsPerPage={rowsPerPage}
+                                page={page}
+                                onPageChange={handleChangePage}
+                                onRowsPerPageChange={handleChangeRowsPerPage}
+                            >
+                            </TablePagination>
                         </CardContent>
                     </Card>
                 </Grid>
