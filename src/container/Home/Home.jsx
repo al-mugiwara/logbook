@@ -15,6 +15,7 @@ import MenuItem from '@mui/material/MenuItem';
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import App from "../../App";
 import Logbook from "../Pages/LogBook/Logbook";
+import LogData from "../Pages/LogData/Logdata";
 
 
 const Home = () => {
@@ -113,6 +114,11 @@ const Home = () => {
                                     Data User
                                 </Button>
                             </Link>
+                            <Link to="/log-data"  style={{ textDecoration: 'none' }}>
+                                <Button key="ddd" sx={{ my: 2, color: 'white', display: 'block' }}>
+                                    Data Log Book
+                                </Button>
+                            </Link>
                             <Link to="/"  style={{ textDecoration: 'none' }}>
                                 <Button key="ddd" sx={{ my: 2, color: 'white', display: 'block' }}>
                                    App
@@ -158,6 +164,8 @@ const Home = () => {
                 <Routes>
                     <Route path="/" exact element={<App />}></Route>
                     <Route path="/log-book" element={<Logbook />}></Route>
+                    <Route path="/log-data" element={<LogData />}></Route>
+                 
                 </Routes>
           
         </Fragment>

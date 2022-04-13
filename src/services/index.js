@@ -18,12 +18,16 @@ const editUser = (id) => Get(`user/find?kode=${id}`);
 //put user
 const updateUser = (data,id) => PUT(`user/edituser/${id}`,data);
 
+//POST LOG BOOK
+const postLog = (data) => POST('Logbook/save',data);
+
 const GENI = {
     getUser,
     postUser,
     deleteUser,
     editUser,
-    updateUser
+    updateUser,
+    postLog
 }
 
 export default GENI;

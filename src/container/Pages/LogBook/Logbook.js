@@ -28,7 +28,11 @@ import LinearProgress from '@mui/material/LinearProgress';
 import SearchBar from "material-ui-search-bar";
 import SendIcon from '@mui/icons-material/Send';
 import DeleteIcon from '@mui/icons-material/Delete';
-
+import { confirmAlert } from "react-confirm-alert";
+import "react-confirm-alert/src/react-confirm-alert.css";
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
+import EditIcon from '@mui/icons-material/Edit';
 
 const useStyles = makeStyles((theme) => ({
     divider: {
@@ -66,6 +70,7 @@ const Logbook = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [search, setSearch] = useState("");
+    const [alert, setAlert] = useState(false);
     const [formData, setFormData] = useState({
         kd_user: "",
         nama: "",
@@ -89,6 +94,18 @@ const Logbook = () => {
         requestSearch(search)
         getDataAPI()
     }
+
+
+    //alert
+    const Alert = React.forwardRef(function Alert(props, ref) {
+        return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+    });
+    const handleClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setAlert(false);
+    };
 
 
     //datatable
@@ -152,19 +169,45 @@ const Logbook = () => {
     // }
 
     const handleSubmit = (e) => {
-        if (tipe) {
-            putDataAPI()
+        if (formData.nama == "" || formData.username == "" || formData.password == "") {
+           console.log("data Harus diisis")
         } else {
-            postDataAPI()
+            if (tipe) {
+                putDataAPI()
+            } else {
+                postDataAPI()
+            }
         }
+
     }
 
     //delete data
-    const handleDelete = (e) => {
-        GENI.deleteUser(e).then(result => {
-            getDataAPI();
-        })
-    }
+    // const handleDelete = (e) => {
+    //     GENI.deleteUser(e).then(result => {
+    //         getDataAPI();
+    //     })
+    // }
+
+    const handleDelete = e => {
+        confirmAlert({
+            title: "Konfirmasi Hapus",
+            message: "Apakah Data Akan Dihapus?",
+            buttons: [
+                {
+                    label: "Ya",
+                    onClick: () => {
+                        GENI.deleteUser(e).then(result => {
+                            getDataAPI();
+                            setAlert(true)
+                        })
+                    }
+                },
+                {
+                    label: "Tidak"
+                }
+            ]
+        });
+    };
 
     useEffect(() => {
         // setTimeout(() => {
@@ -187,15 +230,21 @@ const Logbook = () => {
                         <Divider textAlign="left" style={{ paddingTop: '10px', paddingLeft: '20px', paddingRight: '20px', borderBlockColor: "blue" }}><Typography variant="h5" component="div" style={{ fontWeight: 600 }} gutterBottom>
                             Form Pengguna
                         </Typography></Divider>
+                        <Snackbar open={alert} autoHideDuration={3000} onClose={handleClose}>
+                            <Alert onClose={handleClose} severity="success" sx={{ width: '100%' }}>
+                                This is a success message!
+                            </Alert>
+                        </Snackbar>
+
                         <CardContent>
                             <Grid container justifyContent="center" style={{ margin: 10 }} >
-                                <Grid item xs={2}>
+                                <Grid item xs={2} justifyContent="center">
                                     <Typography sx={{ fontSize: 15, fontWeight: 600 }} style={{ paddingBottom: 30, marginLeft: 150, marginTop: 15 }} gutterBottom variant="h4">
                                         Nama Lengkap
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={10} justifyContent="center">
-                                    <TextField style={{ width: '80%' }} name="nama" onChange={(e) => setFormData({ ...formData, nama: e.target.value, kd_user: new Date().getTime() })} value={formData.nama} label="Nama Lengkap" />
+                                    <TextField style={{ width: '80%' }} name="nama" onChange={(e) => setFormData({ ...formData, nama: e.target.value, kd_user: new Date().getTime() })} value={formData.nama} label="Nama Lengkap"  size="small"/>
                                 </Grid>
                             </Grid>
                             <Grid container justifyContent="center" style={{ margin: 10 }}>
@@ -205,7 +254,7 @@ const Logbook = () => {
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={10} justifyContent="center" >
-                                    <TextField style={{ width: '80%' }} name="username" onChange={(e) => setFormData({ ...formData, username: e.target.value })} value={formData.username} label="Username" />
+                                    <TextField style={{ width: '80%' }} name="username" onChange={(e) => setFormData({ ...formData, username: e.target.value })} value={formData.username} label="Username" size="small"/>
                                 </Grid>
                             </Grid>
                             <Grid container justifyContent="center" style={{ margin: 10 }}>
@@ -215,7 +264,7 @@ const Logbook = () => {
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={10} justifyContent="center">
-                                    <TextField style={{ width: '80%' }} hintText="Password" name="password" type="password" onChange={(e) => setFormData({ ...formData, password: e.target.value })} value={formData.password} label="Password" />
+                                    <TextField style={{ width: '80%' }}  name="password" type="password" onChange={(e) => setFormData({ ...formData, password: e.target.value })} value={formData.password} label="Password" size="small"/>
                                 </Grid>
                             </Grid>
                             <Grid container justifyContent="center" >
@@ -243,12 +292,12 @@ const Logbook = () => {
                                         {
                                             post.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index = 1) => (
                                                 <StyledTableRow key={row.kd_user}>
-                                                    <StyledTableCell scope="row" style={{ width: '2px',height: "8px"}}>
+                                                    <StyledTableCell scope="row" style={{ width: '2px', height: "8px" }}>
                                                         {index + 1}
                                                     </StyledTableCell>
-                                                    <StyledTableCell align="left" style={{ height: "8px", padding: "0px"}}>{row.nama}</StyledTableCell>
-                                                    <StyledTableCell align="left" style={{ height: "8px", padding: "0px"}}>{row.username}</StyledTableCell>
-                                                    <StyledTableCell align="left" style={{ height: "8px", padding: "0px"}}><Button variant="contained" style={{ margin: '1rem', background: '#4CAF50' }} onClick={() => editDataAPI(row.kd_user)}>Edit</Button>
+                                                    <StyledTableCell align="left" style={{ height: "8px", padding: "0px" }}>{row.nama}</StyledTableCell>
+                                                    <StyledTableCell align="left" style={{ height: "8px", padding: "0px" }}>{row.username}</StyledTableCell>
+                                                    <StyledTableCell align="left" style={{ height: "8px", padding: "0px" }}><Button variant="contained" style={{ margin: '1rem', background: '#4CAF50' }} onClick={() => editDataAPI(row.kd_user)} startIcon={<EditIcon />}>Edit</Button>
                                                         <Button variant="contained" style={{ background: 'red' }} onClick={() => handleDelete(row.kd_user)} startIcon={<DeleteIcon />}>Delete</Button>
                                                     </StyledTableCell>
                                                 </StyledTableRow>
