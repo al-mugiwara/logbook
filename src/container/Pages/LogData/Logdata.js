@@ -27,7 +27,7 @@ import TableRow from '@mui/material/TableRow';
 import TablePagination from '@mui/material/TablePagination';
 import LinearProgress from '@mui/material/LinearProgress';
 import SearchBar from "material-ui-search-bar";
-import SendIcon from '@mui/icons-material/Send';
+import InputIcon from '@mui/icons-material/Input';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
@@ -39,7 +39,16 @@ import RadioGroup from '@mui/material/RadioGroup';
 import FormLabel from '@mui/material/FormLabel';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
-
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { format } from 'date-fns';
+import Chip from '@mui/material/Chip';
+import TagFacesIcon from '@mui/icons-material/TagFaces';
+import FaceRetouchingOffSharpIcon from '@mui/icons-material/FaceRetouchingOffSharp';
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
+import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople';
+import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
@@ -71,7 +80,41 @@ const LogData = () => {
         deskripsi: "",
         keterangan: "",
         status: ""
-    })
+    });
+    const [postblm, setPostblm] = useState([]);
+    const [data, setData] = useState(false);
+    const [search, setSearch] = useState("");
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+
+
+    //searchblm
+    //cari data
+    const requestSearch = (searchVal) => {
+        const filteredRows = postblm.filter((row) => {
+            return row.deskripsi.toLowerCase().includes(searchVal.toLowerCase())
+        })
+        setPostblm(filteredRows);
+        if (searchVal === "") {
+            getDataBlm()
+        }
+    }
+
+    const cancelSearch = () => {
+        setSearch("");
+        requestSearch(search)
+        getDataBlm()
+    }
+
+    //datatable
+    const handleChangePage = (e, newPage) => {
+        setPage(newPage);
+    }
+
+    const handleChangeRowsPerPage = (e) => {
+        setRowsPerPage(+e.target.value)
+        setPage(0)
+    }
 
     //alert
     const Alert = React.forwardRef(function Alert(props, ref) {
@@ -83,6 +126,22 @@ const LogData = () => {
         }
         setAlert(false);
     };
+
+    //getData Blm 
+    const getDataBlm = () => {
+        GENI.getLogblm().then(result => {
+            setPostblm(result);
+            setData(true)
+        })
+    }
+
+    // put data sta
+    const putDataSta = (e, sta) => {
+        GENI.updatestaLog(sta, e).then(result => {
+            getDataBlm()
+            setAlert(true)
+        })
+    }
 
     //post data
     const postDataAPI = () => {
@@ -96,16 +155,45 @@ const LogData = () => {
                 status: "b"
             })
             setAlert(true)
+            getDataBlm()
         })
     }
-
-
     const handleSubmit = (e) => {
         postDataAPI()
     }
 
+    const handleUpSta = (e, sta) => {
+        putDataSta(e, sta)
+    }
 
+    const handleUbah = (e) => {
+        confirmAlert({
+            customUI: ({ onClose }) => {
+                return (
+                    <div className='custom-ui'>
+                        <Paper elevation={3}>
+                            <CardContent>
+                                <Typography variant="h5"><PriorityHighIcon /> Status Akan Diubah</Typography>
+                                <p>Apakah Anda Akan Mengubah Status Kegiatan ? </p>
+                                <Grid container justifyContent="center">
+                                    <Grid item xs={3} marginRight={3}>
+                                        <Button size="small" variant="contained" startIcon={<DirectionsRunIcon />} onClick={() => [handleUpSta(e, 'sd'), onClose()]}>Sedang </Button>
+                                    </Grid>
+                                    <Grid item xs={3} marginRight={7}>
+                                        <Button size="small" variant="contained" color="success" endIcon={<EmojiPeopleIcon />} onClick={handleSubmit}>Sudah </Button>
+                                    </Grid>
+                                </Grid>
+                            </CardContent>
+                        </Paper>
+                    </div>
+                );
+            }
+        });
+    }
 
+    useEffect(() => {
+        getDataBlm()
+    }, [data])
 
     return (
         <Fragment>
@@ -131,17 +219,29 @@ const LogData = () => {
                                 <Grid container margin={0} spacing={1} >
                                     <Grid item xs={6} >
                                         <FormLabel><Typography sx={{ fontSize: 13, fontWeight: 600, color: 'black' }}>Tanggal:</Typography> </FormLabel>
-                                        <TextField name="tanggal" type="date" fullWidth size="small" onChange={(e) => setFormData({ ...formData, tanggal_log: e.target.value })}  value={formData.tanggal_log}/>
+                                        <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                            <DatePicker
+                                                value={formData.tanggal_log}
+                                                onChange={(newValue) => {
+                                                    setFormData({
+                                                        ...formData,
+                                                        tanggal_log: newValue
+                                                    })
+                                                }}
+                                                renderInput={(params) => <TextField {...params} />}
+                                            />
+                                        </LocalizationProvider>
+                                        {/* <TextField name="tanggal" type="date" fullWidth size="small" onChange={(e) => setFormData({ ...formData, tanggal_log: e.target.value })} value={} /> */}
                                     </Grid>
                                     <Grid item xs={6} >
                                         <FormLabel><Typography sx={{ fontSize: 13, fontWeight: 600, color: 'black' }}>Deskripsi:</Typography></FormLabel>
-                                        <TextField name="deskripsi" label="Deskripsi" fullWidth multiline rows={2} onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })} value={formData.deskripsi}/>
+                                        <TextField name="deskripsi" label="Deskripsi" fullWidth multiline rows={2} onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })} value={formData.deskripsi} />
                                     </Grid>
                                 </Grid>
                                 <Grid container margin={0} spacing={1}  >
                                     <Grid item xs={6}>
                                         <FormLabel><Typography sx={{ fontSize: 13, fontWeight: 600, color: 'black' }}>Keterangan:</Typography></FormLabel>
-                                        <TextField name="keterangan" label="Keterangan" fullWidth multiline rows={2} onChange={(e) => setFormData({ ...formData, keterangan: e.target.value })} value={formData.keterangan}/>
+                                        <TextField name="keterangan" label="Keterangan" fullWidth multiline rows={2} onChange={(e) => setFormData({ ...formData, keterangan: e.target.value })} value={formData.keterangan} />
                                     </Grid>
                                     <Grid item xs={6} >
                                         <FormLabel><Typography sx={{ fontSize: 13, fontWeight: 600, color: 'black' }}>Status:</Typography></FormLabel>
@@ -158,8 +258,13 @@ const LogData = () => {
                                         </RadioGroup>
                                     </Grid>
                                 </Grid>
-                                <Grid container justifyContent="center" padding={5} >
-                                    <Button variant="contained" endIcon={<SendIcon />} onClick={handleSubmit}>Add</Button>
+                                <Grid container padding={2} >
+                                    <Grid item xs={4}></Grid>
+                                    <Grid item xs={4}>
+                                        <Button variant="contained" startIcon={<InputIcon />} onClick={handleSubmit}>Tambahkan</Button>
+                                    </Grid>
+                                    <Grid item xs={4}></Grid>
+
                                 </Grid>
                             </CardContent>
                         </Box>
@@ -220,31 +325,59 @@ const LogData = () => {
                                 <Divider textAlign="left" style={{ paddingTop: '10px', paddingLeft: '20px', paddingRight: '20px', borderBlockColor: "blue" }}><Typography variant="h6" component="div" style={{ fontWeight: 600 }} gutterBottom>
                                     Kegiatan Yang Belum Dikerjakan
                                 </Typography></Divider>
+                                <Grid container padding={2} >
+                                    <SearchBar
+                                        value={search}
+                                        onChange={(searchVal) => requestSearch(searchVal)}
+                                        onCancelSearch={() => cancelSearch()}
+                                        label="Cari Berdasarkan Deskripsi Pekerjaan"
+                                    >
+                                    </SearchBar>
+                                </Grid>
                                 <TableContainer component={Paper} padding={10}>
                                     <Table aria-label="customized table">
                                         <TableHead>
                                             <TableRow>
                                                 <StyledTableCell style={{ width: '10vh' }} align="left">No</StyledTableCell>
-                                                <StyledTableCell style={{ width: '20vh' }} align="left">Nama Lengkap</StyledTableCell>
-                                                <StyledTableCell style={{ width: '20vh' }} align="left">Username</StyledTableCell>
-                                                <StyledTableCell style={{ width: '20vh' }} align="left">Action</StyledTableCell>
+                                                <StyledTableCell style={{ width: '20vh' }} align="left">Tanggal</StyledTableCell>
+                                                <StyledTableCell style={{ width: '20vh' }} align="left">Deskripsi Pekerjaan</StyledTableCell>
+                                                <StyledTableCell style={{ width: '20vh' }} align="left">Keterangan</StyledTableCell>
+                                                <StyledTableCell style={{ width: '20vh' }} align="left">Status</StyledTableCell>
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
-                                            <StyledTableRow key="31">
-                                                <StyledTableCell scope="row" style={{ width: '2px', height: "8px" }}>
-                                                    1
-                                                </StyledTableCell>
-                                                <StyledTableCell align="left" style={{ height: "8px", padding: "0px" }}>sadsa</StyledTableCell>
-                                                <StyledTableCell align="left" style={{ height: "8px", padding: "0px" }}>ad</StyledTableCell>
-                                                <StyledTableCell align="left" style={{ height: "8px", padding: "0px" }}>
-                                                    <Button variant="contained" style={{ margin: '1rem', background: '#4CAF50' }} startIcon={<EditIcon />}>Edit</Button>
-                                                    <Button variant="contained" style={{ background: 'red' }} startIcon={<DeleteIcon />}>Delete</Button>
-                                                </StyledTableCell>
-                                            </StyledTableRow>
+                                            {
+                                                postblm.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index = 1) => (
+                                                    <StyledTableRow key={row.kd_log_d}>
+                                                        <StyledTableCell scope="row" style={{ width: '2px', height: "8px" }}>
+                                                            {index + 1}
+                                                        </StyledTableCell>
+                                                        <StyledTableCell align="left" style={{ height: "8px", padding: "0px" }}>{row.tanggal_log}</StyledTableCell>
+                                                        <StyledTableCell align="left" style={{ height: "8px", padding: "0px" }}>{row.deskripsi}</StyledTableCell>
+                                                        <StyledTableCell align="left" style={{ height: "8px", padding: "0px" }}>{row.keterangan}</StyledTableCell>
+                                                        <StyledTableCell align="left" style={{ height: "8px", padding: "0px" }}>
+                                                            <Chip onClick={() => handleUbah(row.kd_log_d)} variant="outlined" color="error" icon={<FaceRetouchingOffSharpIcon />} label="Belum Dikerjakan"></Chip>
+                                                        </StyledTableCell>
+                                                    </StyledTableRow>
+                                                ))
+                                            }
                                         </TableBody>
                                     </Table>
                                 </TableContainer>
+                                {
+                                    postblm && postblm.length > 0 ? " "
+                                        : <Typography justifyContent="center" style={{ textAlign: 'center' }}>Tidak Ada Data Yang Ditampilkan</Typography>
+                                }
+                                <TablePagination
+                                    rowsPerPageOptions={[5, 10, 25, 100]}
+                                    component="div"
+                                    count={postblm.length}
+                                    rowsPerPage={rowsPerPage}
+                                    page={page}
+                                    onPageChange={handleChangePage}
+                                    onRowsPerPageChange={handleChangeRowsPerPage}
+                                >
+                                </TablePagination>
                             </CardContent>
                         </Box>
                     </Paper>

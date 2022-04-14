@@ -21,13 +21,21 @@ const updateUser = (data,id) => PUT(`user/edituser/${id}`,data);
 //POST LOG BOOK
 const postLog = (data) => POST('Logbook/save',data);
 
+//get Log Book Belum Dikerjakan
+const getLogblm = () => Get('Logbook/log');
+
+//update status Log Book
+const updatestaLog = (data,id) => PUT(`Logbook/update/${id}/${data}`,data);
+
 const GENI = {
     getUser,
     postUser,
     deleteUser,
     editUser,
     updateUser,
-    postLog
+    postLog,
+    getLogblm,
+    updatestaLog
 }
 
 export default GENI;
